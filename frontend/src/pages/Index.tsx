@@ -142,6 +142,96 @@ const Index = () => {
     return matchesSearch && matchesTab;
   });
 
+  const displayedTransmittals = filteredTransmittals.slice(0, itemsToShow);
+  const hasMore = filteredTransmittals.length > itemsToShow;
+
+  const handleLoadMore = () => {
+    setItemsToShow(prev => prev + 6);
+  };
+
+  const handleCreateTransmittal = () => {
+    setSelectedTransmittal(null);
+    setModalMode("create");
+    setCreateModalOpen(true);
+  };
+
+  const handleEditTransmittal = (transmittal: any) => {
+    setSelectedTransmittal(transmittal);
+    setModalMode("edit");
+    setCreateModalOpen(true);
+  };
+
+  const handleViewTransmittal = (transmittal: any) => {
+    setSelectedTransmittal(transmittal);
+    setModalMode("view");
+    setCreateModalOpen(true);
+  };
+
+  const handleDeleteTransmittal = (transmittal: any) => {
+    setSelectedTransmittal(transmittal);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedTransmittal) {
+      // Here you would make API call to delete
+      toast({
+        title: "Transmittal deleted",
+        description: `"${selectedTransmittal.title}" has been deleted.`,
+      });
+    }
+    setDeleteDialogOpen(false);
+    setSelectedTransmittal(null);
+  };
+
+  const handleGenerateTransmittal = (transmittal: any) => {
+    setSelectedTransmittal(transmittal);
+    setGenerateDialogOpen(true);
+  };
+
+  const confirmGenerate = () => {
+    if (selectedTransmittal) {
+      // Here you would make API call to generate
+      toast({
+        title: "Transmittal generated",
+        description: `"${selectedTransmittal.title}" has been generated successfully.`,
+      });
+    }
+    setGenerateDialogOpen(false);
+    setSelectedTransmittal(null);
+  };
+
+  const handleShare = (transmittal: any) => {
+    setSelectedTransmittal(transmittal);
+    setShareModalOpen(true);
+  };
+
+  const handleDuplicate = (transmittal: any, mode: "opposite" | "same") => {
+    // Here you would make API call to duplicate
+    const newMode = mode === "opposite" 
+      ? (transmittal.sendMode === "Softcopy" ? "Hardcopy" : "Softcopy")
+      : transmittal.sendMode;
+    
+    toast({
+      title: "Transmittal duplicated",
+      description: `Created ${newMode} copy of "${transmittal.title}".`,
+    });
+  };
+
+  const handleSendToOther = (transmittal: any) => {
+    setSelectedTransmittal(transmittal);
+    setModalMode("create"); // Use create mode with pre-filled data
+    setCreateModalOpen(true);
+  };
+
+  const handleDownload = (transmittal: any) => {
+    // Mock download functionality
+    toast({
+      title: "Download started",
+      description: `Downloading "${transmittal.title}".`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
