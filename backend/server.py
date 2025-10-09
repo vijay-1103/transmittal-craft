@@ -331,9 +331,14 @@ async def update_receive_status(transmittal_id: str, receive_details: ReceiveDet
     if not transmittal:
         raise HTTPException(status_code=404, detail="Transmittal not found")
     
+    receive_dict = receive_details.dict()
+    # Convert date objects to ISO format strings for MongoDB
+    if 'received_date' in receive_dict and isinstance(receive_dict['received_date'], date):
+        receive_dict['received_date'] = receive_dict['received_date'].isoformat()
+    
     update_data = {
         "status": "received",
-        "receive_details": receive_details.dict(),
+        "receive_details": receive_dict,
         "received_status": received_status
     }
     
