@@ -159,6 +159,196 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+# Transmittal API Endpoints
+
+@api_router.post("/transmittals", response_model=TransmittalResponse)
+async def create_transmittal(transmittal_data: TransmittalCreate):
+    """Create a new transmittal as draft"""
+    transmittal_dict = transmittal_data.dict()
+    transmittal_dict['document_count'] = len(transmittal_data.documents)
+    transmittal_obj = Transmittal(**transmittal_dict)
+    
+    await db.transmittals.insert_one(transmittal_obj.dict())
+    return TransmittalResponse(**transmittal_obj.dict())
+
+@api_router.get("/transmittals", response_model=List[TransmittalResponse])
+async def get_transmittals(
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 9
+):
+    """Get transmittals with optional filtering and pagination"""
+    query = {}
+    if status and status != "all":
+        query["status"] = status
+    
+    transmittals = await db.transmittals.find(query).sort("created_date", -1).skip(skip).limit(limit).to_list(limit)
+    return [TransmittalResponse(**transmittal) for transmittal in transmittals]
+
+@api_router.get("/transmittals/count")
+async def get_transmittals_count(status: Optional[str] = None):
+    """Get total count of transmittals"""
+    query = {}
+    if status and status != "all":
+        query["status"] = status
+    
+    count = await db.transmittals.count_documents(query)
+    return {"count": count}
+
+@api_router.get("/transmittals/{transmittal_id}", response_model=TransmittalResponse)
+async def get_transmittal(transmittal_id: str):
+    """Get a specific transmittal by ID"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    return TransmittalResponse(**transmittal)
+
+@api_router.put("/transmittals/{transmittal_id}", response_model=TransmittalResponse)
+async def update_transmittal(transmittal_id: str, update_data: TransmittalUpdate):
+    """Update a transmittal (only if status is draft)"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    
+    if transmittal.get("status") != "draft":
+        raise HTTPException(status_code=400, detail="Cannot edit generated transmittal")
+    
+    update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+    if 'documents' in update_dict:
+        update_dict['document_count'] = len(update_dict['documents'])
+    
+    await db.transmittals.update_one(
+        {"id": transmittal_id},
+        {"$set": update_dict}
+    )
+    
+    updated_transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    return TransmittalResponse(**updated_transmittal)
+
+@api_router.delete("/transmittals/{transmittal_id}")
+async def delete_transmittal(transmittal_id: str):
+    """Delete a transmittal (only if status is draft)"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    
+    if transmittal.get("status") != "draft":
+        raise HTTPException(status_code=400, detail="Cannot delete generated transmittal")
+    
+    await db.transmittals.delete_one({"id": transmittal_id})
+    return {"message": "Transmittal deleted successfully"}
+
+@api_router.post("/transmittals/{transmittal_id}/generate", response_model=TransmittalResponse)
+async def generate_transmittal(transmittal_id: str):
+    """Generate a transmittal (change status from draft to generated)"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    
+    if transmittal.get("status") != "draft":
+        raise HTTPException(status_code=400, detail="Transmittal already generated")
+    
+    # Generate transmittal number
+    count = await db.transmittals.count_documents({"status": {"$ne": "draft"}})
+    transmittal_number = f"TRN-{datetime.now().year}-{str(count + 1).zfill(3)}"
+    
+    await db.transmittals.update_one(
+        {"id": transmittal_id},
+        {"$set": {
+            "status": "generated",
+            "transmittal_number": transmittal_number,
+            "generated_date": datetime.utcnow()
+        }}
+    )
+    
+    updated_transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    return TransmittalResponse(**updated_transmittal)
+
+@api_router.post("/transmittals/{transmittal_id}/duplicate", response_model=TransmittalResponse)
+async def duplicate_transmittal(transmittal_id: str, mode: str = "opposite"):
+    """Duplicate transmittal with opposite send mode or same mode"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    
+    # Create duplicate
+    duplicate_dict = dict(transmittal)
+    duplicate_dict.pop("_id", None)  # Remove MongoDB _id
+    duplicate_dict["id"] = str(uuid.uuid4())
+    duplicate_dict["status"] = "draft"
+    duplicate_dict["transmittal_number"] = None
+    duplicate_dict["generated_date"] = None
+    duplicate_dict["created_date"] = datetime.utcnow()
+    duplicate_dict["send_details"] = None
+    duplicate_dict["receive_details"] = None
+    duplicate_dict["sent_status"] = None
+    duplicate_dict["received_status"] = None
+    
+    # Change send mode if mode is opposite
+    if mode == "opposite":
+        duplicate_dict["send_mode"] = "Hardcopy" if transmittal["send_mode"] == "Softcopy" else "Softcopy"
+        duplicate_dict["title"] = f"{duplicate_dict['title']} - {duplicate_dict['send_mode']} Copy"
+    else:
+        duplicate_dict["title"] = f"{duplicate_dict['title']} - Copy"
+    
+    await db.transmittals.insert_one(duplicate_dict)
+    return TransmittalResponse(**duplicate_dict)
+
+@api_router.post("/transmittals/{transmittal_id}/send")
+async def update_send_status(transmittal_id: str, send_details: SendDetails, sent_status: str):
+    """Update send details and status"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    
+    update_data = {
+        "status": "sent",
+        "send_details": send_details.dict(),
+        "sent_status": sent_status
+    }
+    
+    await db.transmittals.update_one(
+        {"id": transmittal_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Send status updated successfully"}
+
+@api_router.post("/transmittals/{transmittal_id}/receive")
+async def update_receive_status(transmittal_id: str, receive_details: ReceiveDetails, received_status: str):
+    """Update receive details and status"""
+    transmittal = await db.transmittals.find_one({"id": transmittal_id})
+    if not transmittal:
+        raise HTTPException(status_code=404, detail="Transmittal not found")
+    
+    update_data = {
+        "status": "received",
+        "receive_details": receive_details.dict(),
+        "received_status": received_status
+    }
+    
+    await db.transmittals.update_one(
+        {"id": transmittal_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Receive status updated successfully"}
+
+@api_router.post("/transmittals/upload-receipt")
+async def upload_receipt(file: UploadFile = File(...)):
+    """Upload receipt file and return base64 encoded string"""
+    if not file.content_type.startswith(('image/', 'application/pdf')):
+        raise HTTPException(status_code=400, detail="Only images and PDF files are allowed")
+    
+    content = await file.read()
+    base64_content = base64.b64encode(content).decode('utf-8')
+    
+    return {
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "base64_content": base64_content
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
