@@ -50,6 +50,7 @@ export function CreateTransmittalModal({
   onOpenChange,
   editData,
   mode = "create",
+  onSuccess,
 }: CreateTransmittalModalProps) {
   const { toast } = useToast();
   const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
