@@ -249,7 +249,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <Button onClick={() => setCreateSheetOpen(true)} size="sm" className="md:size-default">
+            <Button onClick={handleCreateTransmittal} size="sm" className="md:size-default">
               <Plus className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">Create Transmittal</span>
             </Button>
