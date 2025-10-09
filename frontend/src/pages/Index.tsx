@@ -126,11 +126,14 @@ const Index = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedTransmittal, setSelectedTransmittal] = useState<any>(null);
+  const [selectedTransmittal, setSelectedTransmittal] = useState<Transmittal | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
   const [itemsToShow, setItemsToShow] = useState(9);
+  const [transmittals, setTransmittals] = useState<Transmittal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
   const { toast } = useToast();
 
   const filteredTransmittals = mockTransmittals.filter((t) => {
