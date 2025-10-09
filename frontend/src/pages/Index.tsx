@@ -211,13 +211,22 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedTransmittal) {
-      // Here you would make API call to delete
-      toast({
-        title: "Transmittal deleted",
-        description: `"${selectedTransmittal.title}" has been deleted.`,
-      });
+      try {
+        await transmittalApi.deleteTransmittal(selectedTransmittal.id);
+        toast({
+          title: "Transmittal deleted",
+          description: `"${selectedTransmittal.title}" has been deleted.`,
+        });
+        loadTransmittals(true); // Reload data
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete transmittal.",
+          variant: "destructive",
+        });
+      }
     }
     setDeleteDialogOpen(false);
     setSelectedTransmittal(null);
