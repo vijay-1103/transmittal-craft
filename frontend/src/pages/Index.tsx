@@ -1,11 +1,22 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search } from "lucide-react";
 import { TransmittalCard } from "@/components/TransmittalCard";
-import { CreateTransmittalSheet } from "@/components/CreateTransmittalSheet";
-import { DocumentLibraryModal } from "@/components/DocumentLibraryModal";
+import { CreateTransmittalModal } from "@/components/CreateTransmittalModal";
+import { ShareModal } from "@/components/ShareModal";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import logo from "@/assets/hosmac-logo.jpg";
 
 // Mock data - will be replaced with actual database
