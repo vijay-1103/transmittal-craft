@@ -169,20 +169,32 @@ export function TransmittalCard({
       </CardContent>
       
       <CardFooter className="pt-3 border-t gap-2">
-        {status === "draft" && onEdit && (
-          <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
-            Edit
+        {status === "draft" ? (
+          <>
+            <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={onView} className="flex-1">
+              View
+            </Button>
+            {onGenerate && (
+              <Button size="sm" onClick={onGenerate} className="flex-1">
+                Generate
+              </Button>
+            )}
+            {onDelete && (
+              <Button variant="ghost" size="sm" onClick={onDelete} className="px-2">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            )}
+          </>
+        ) : (
+          <Button variant="outline" size="sm" onClick={onView} className="w-full">
+            View
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         )}
-        <Button 
-          variant={status === "draft" ? "default" : "outline"} 
-          size="sm" 
-          onClick={onView}
-          className="flex-1"
-        >
-          View
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
       </CardFooter>
     </Card>
   );
