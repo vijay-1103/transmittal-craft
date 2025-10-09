@@ -357,22 +357,53 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Modals and Sheets */}
-      <CreateTransmittalSheet
-        open={createSheetOpen}
-        onOpenChange={setCreateSheetOpen}
-        onOpenDocumentLibrary={() => {
-          setDocumentLibraryOpen(true);
-        }}
+      {/* Modals and Dialogs */}
+      <CreateTransmittalModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        editData={selectedTransmittal}
+        mode={modalMode}
       />
 
-      <DocumentLibraryModal
-        open={documentLibraryOpen}
-        onOpenChange={setDocumentLibraryOpen}
-        onSelectDocuments={(docs) => {
-          console.log("Selected documents:", docs);
-        }}
+      <ShareModal
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        transmittalTitle={selectedTransmittal?.title || ""}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Transmittal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{selectedTransmittal?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Generate Confirmation Dialog */}
+      <AlertDialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Once generated, this transmittal cannot be edited or deleted. Do you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmGenerate}>Yes, Generate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
