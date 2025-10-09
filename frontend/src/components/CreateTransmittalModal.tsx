@@ -128,19 +128,28 @@ export function CreateTransmittalModal({
     }
 
     try {
-      const payload = {
+      const payload: TransmittalCreate = {
         ...formData,
+        transmittal_date: format(formData.transmittal_date, "yyyy-MM-dd"),
         documents,
       };
 
-      // Here you would make API call to save/update transmittal
-      console.log("Saving draft:", payload);
+      if (mode === "edit" && editData?.id) {
+        await transmittalApi.updateTransmittal(editData.id, payload);
+        toast({
+          title: "Draft updated",
+          description: "Your transmittal has been updated successfully.",
+        });
+      } else {
+        await transmittalApi.createTransmittal(payload);
+        toast({
+          title: "Draft saved",
+          description: "Your transmittal has been saved as a draft.",
+        });
+      }
       
-      toast({
-        title: "Draft saved",
-        description: "Your transmittal has been saved as a draft.",
-      });
       onOpenChange(false);
+      onSuccess?.();
     } catch (error) {
       toast({
         title: "Error",
