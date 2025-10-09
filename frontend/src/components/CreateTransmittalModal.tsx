@@ -30,19 +30,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { transmittalApi, type DocumentItem, type TransmittalCreate } from "@/services/transmittalApi";
 
-interface DocumentItem {
-  document_no: string;
-  title: string;
-  revision: number;
-  copies: number;
-  action: string;
-}
-
 interface CreateTransmittalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editData?: any;
   mode?: "create" | "edit" | "view";
+  onSuccess?: () => void;
 }
 
 const transmittalTypes = ["Drawing", "Documents"];
