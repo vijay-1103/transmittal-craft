@@ -136,18 +136,53 @@ const Index = () => {
   const [hasMore, setHasMore] = useState(false);
   const { toast } = useToast();
 
-  const filteredTransmittals = mockTransmittals.filter((t) => {
+  // Load transmittals from API
+  const loadTransmittals = async (reset = false) => {
+    try {
+      setLoading(true);
+      const skip = reset ? 0 : transmittals.length;
+      const limit = reset ? itemsToShow : 6;
+
+      const data = await transmittalApi.getTransmittals({
+        status: activeTab,
+        skip,
+        limit,
+      });
+
+      if (reset) {
+        setTransmittals(data);
+      } else {
+        setTransmittals(prev => [...prev, ...data]);
+      }
+
+      setHasMore(data.length === limit);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load transmittals.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load transmittals on component mount and tab change
+  useEffect(() => {
+    setItemsToShow(9);
+    loadTransmittals(true);
+  }, [activeTab]);
+
+  // Filter transmittals based on search
+  const filteredTransmittals = transmittals.filter((t) => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.transmittalNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.recipient?.toLowerCase().includes(searchQuery.toLowerCase());
+      t.transmittal_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesTab = activeTab === "all" || t.status === activeTab;
-    
-    return matchesSearch && matchesTab;
+    return matchesSearch;
   });
 
-  const displayedTransmittals = filteredTransmittals.slice(0, itemsToShow);
-  const hasMore = filteredTransmittals.length > itemsToShow;
+  const displayedTransmittals = filteredTransmittals;
 
   const handleLoadMore = () => {
     setItemsToShow(prev => prev + 6);
