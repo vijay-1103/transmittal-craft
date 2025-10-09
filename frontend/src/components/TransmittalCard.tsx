@@ -57,8 +57,17 @@ export function TransmittalCard({
   recipient,
   documentCount,
   createdDate,
+  sentStatus,
+  receivedStatus,
+  sendMode,
   onView,
   onEdit,
+  onDelete,
+  onGenerate,
+  onDownload,
+  onShare,
+  onDuplicate,
+  onSendToOther,
 }: TransmittalCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow">
