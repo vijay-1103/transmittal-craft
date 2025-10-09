@@ -223,6 +223,10 @@ async def update_transmittal(transmittal_id: str, update_data: TransmittalUpdate
     if 'documents' in update_dict:
         update_dict['document_count'] = len(update_dict['documents'])
     
+    # Convert date objects to ISO format strings for MongoDB
+    if 'transmittal_date' in update_dict and isinstance(update_dict['transmittal_date'], date):
+        update_dict['transmittal_date'] = update_dict['transmittal_date'].isoformat()
+    
     await db.transmittals.update_one(
         {"id": transmittal_id},
         {"$set": update_dict}
