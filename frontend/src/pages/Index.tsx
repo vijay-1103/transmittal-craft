@@ -237,13 +237,22 @@ const Index = () => {
     setGenerateDialogOpen(true);
   };
 
-  const confirmGenerate = () => {
+  const confirmGenerate = async () => {
     if (selectedTransmittal) {
-      // Here you would make API call to generate
-      toast({
-        title: "Transmittal generated",
-        description: `"${selectedTransmittal.title}" has been generated successfully.`,
-      });
+      try {
+        await transmittalApi.generateTransmittal(selectedTransmittal.id);
+        toast({
+          title: "Transmittal generated",
+          description: `"${selectedTransmittal.title}" has been generated successfully.`,
+        });
+        loadTransmittals(true); // Reload data
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to generate transmittal.",
+          variant: "destructive",
+        });
+      }
     }
     setGenerateDialogOpen(false);
     setSelectedTransmittal(null);
