@@ -28,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { transmittalApi, type DocumentItem, type TransmittalCreate } from "@/services/transmittalApi";
 
 interface DocumentItem {
   document_no: string;
