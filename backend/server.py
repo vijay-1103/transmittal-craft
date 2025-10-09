@@ -168,7 +168,13 @@ async def create_transmittal(transmittal_data: TransmittalCreate):
     transmittal_dict['document_count'] = len(transmittal_data.documents)
     transmittal_obj = Transmittal(**transmittal_dict)
     
-    await db.transmittals.insert_one(transmittal_obj.dict())
+    # Convert to dict with proper serialization for MongoDB
+    insert_dict = transmittal_obj.dict()
+    # Convert date objects to ISO format strings for MongoDB
+    if isinstance(insert_dict.get('transmittal_date'), date):
+        insert_dict['transmittal_date'] = insert_dict['transmittal_date'].isoformat()
+    
+    await db.transmittals.insert_one(insert_dict)
     return TransmittalResponse(**transmittal_obj.dict())
 
 @api_router.get("/transmittals", response_model=List[TransmittalResponse])
