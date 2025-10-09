@@ -311,9 +311,14 @@ async def update_send_status(transmittal_id: str, send_details: SendDetails, sen
     if not transmittal:
         raise HTTPException(status_code=404, detail="Transmittal not found")
     
+    send_dict = send_details.dict()
+    # Convert datetime objects to ISO format strings for MongoDB if needed
+    if 'send_date' in send_dict and send_dict['send_date'] and isinstance(send_dict['send_date'], (date, datetime)):
+        send_dict['send_date'] = send_dict['send_date'].isoformat()
+    
     update_data = {
         "status": "sent",
-        "send_details": send_details.dict(),
+        "send_details": send_dict,
         "sent_status": sent_status
     }
     
