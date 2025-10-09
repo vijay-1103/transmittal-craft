@@ -291,7 +291,7 @@ const Index = () => {
                       : `No ${activeTab} transmittals`}
                   </p>
                   {!searchQuery && (
-                    <Button onClick={() => setCreateSheetOpen(true)}>
+                    <Button onClick={handleCreateTransmittal}>
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Transmittal
                     </Button>
