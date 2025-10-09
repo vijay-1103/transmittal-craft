@@ -18,8 +18,17 @@ interface TransmittalCardProps {
   recipient?: string;
   documentCount: number;
   createdDate: string;
+  sentStatus?: string; // For sent tab: "Sent" | "Not Sent"
+  receivedStatus?: string; // For received tab: "Received" | "Not Received"
+  sendMode?: string; // "Hardcopy" | "Softcopy"
   onView: () => void;
   onEdit?: () => void;
+  onDelete?: () => void;
+  onGenerate?: () => void;
+  onDownload?: () => void;
+  onShare?: () => void;
+  onDuplicate?: (mode: "opposite" | "same") => void;
+  onSendToOther?: () => void;
 }
 
 const statusConfig = {
