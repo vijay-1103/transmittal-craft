@@ -119,15 +119,18 @@ backend:
 
   - task: "Comprehensive CRUD API endpoints for transmittals"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
         - agent: "main"
         - comment: "Implemented create, read, update, delete, generate, duplicate, send/receive status endpoints. Need testing for all endpoints"
+        - working: true
+        - agent: "testing"
+        - comment: "Comprehensive testing completed successfully. All 14 core API endpoints working correctly: POST/GET/PUT/DELETE transmittals, generate, duplicate, send/receive status updates, count, file upload. Fixed date serialization issues for MongoDB compatibility. All business logic validated including draft/generated restrictions, transmittal number generation (TRN-YYYY-XXX format), document count calculation, pagination, filtering, and error handling. Edge cases tested including invalid IDs, pagination limits, file validation, and duplicate modes."
 
 frontend:
   - task: "Replace CreateTransmittalSheet with wide modal"
