@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Loader2 } from "lucide-react";
 import { TransmittalCard } from "@/components/TransmittalCard";
 import { CreateTransmittalModal } from "@/components/CreateTransmittalModal";
 import { ShareModal } from "@/components/ShareModal";
@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { transmittalApi, type Transmittal } from "@/services/transmittalApi";
 import logo from "@/assets/hosmac-logo.jpg";
 
 // Mock data - will be replaced with actual database
