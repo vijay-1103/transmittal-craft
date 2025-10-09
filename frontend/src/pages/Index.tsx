@@ -185,7 +185,7 @@ const Index = () => {
   const displayedTransmittals = filteredTransmittals;
 
   const handleLoadMore = () => {
-    setItemsToShow(prev => prev + 6);
+    loadTransmittals(false);
   };
 
   const handleCreateTransmittal = () => {
