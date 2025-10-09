@@ -69,6 +69,30 @@ export function TransmittalCard({
   onDuplicate,
   onSendToOther,
 }: TransmittalCardProps) {
+  const getDisplayStatus = () => {
+    if (status === "sent" && sentStatus) {
+      return sentStatus;
+    }
+    if (status === "received" && receivedStatus) {
+      return receivedStatus;
+    }
+    return statusConfig[status].label;
+  };
+
+  const getStatusClassName = () => {
+    if (status === "sent") {
+      return sentStatus === "Sent" 
+        ? "bg-green-600 text-white hover:bg-green-600/90"
+        : "bg-yellow-600 text-white hover:bg-yellow-600/90";
+    }
+    if (status === "received") {
+      return receivedStatus === "Received"
+        ? "bg-blue-600 text-white hover:bg-blue-600/90"
+        : "bg-orange-600 text-white hover:bg-orange-600/90";
+    }
+    return statusConfig[status].className;
+  };
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
@@ -81,9 +105,47 @@ export function TransmittalCard({
               </p>
             )}
           </div>
-          <Badge className={statusConfig[status].className}>
-            {statusConfig[status].label}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusClassName()}>
+              {getDisplayStatus()}
+            </Badge>
+            {(status === "generated" || status === "sent" || status === "received") && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onDownload && (
+                    <DropdownMenuItem onClick={onDownload}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </DropdownMenuItem>
+                  )}
+                  {onShare && (
+                    <DropdownMenuItem onClick={onShare}>
+                      <Share className="mr-2 h-4 w-4" />
+                      Share
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  {onDuplicate && (
+                    <DropdownMenuItem onClick={() => onDuplicate("opposite")}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Send as {sendMode === "Softcopy" ? "Hardcopy" : "Softcopy"}
+                    </DropdownMenuItem>
+                  )}
+                  {onSendToOther && (
+                    <DropdownMenuItem onClick={onSendToOther}>
+                      <User className="mr-2 h-4 w-4" />
+                      Send to Other Recipient
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       
