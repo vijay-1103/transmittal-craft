@@ -171,20 +171,30 @@ export function CreateTransmittalModal({
     }
 
     try {
-      const payload = {
-        ...formData,
-        documents,
-      };
+      let transmittalId = editData?.id;
 
-      // Here you would make API call to generate transmittal
-      console.log("Generating transmittal:", payload);
-      
-      toast({
-        title: "Transmittal generated",
-        description: "Your transmittal has been generated successfully.",
-      });
-      onOpenChange(false);
-      setShowGenerateConfirm(false);
+      // If creating new, save as draft first
+      if (mode === "create") {
+        const payload: TransmittalCreate = {
+          ...formData,
+          transmittal_date: format(formData.transmittal_date, "yyyy-MM-dd"),
+          documents,
+        };
+        const created = await transmittalApi.createTransmittal(payload);
+        transmittalId = created.id;
+      }
+
+      // Then generate it
+      if (transmittalId) {
+        await transmittalApi.generateTransmittal(transmittalId);
+        toast({
+          title: "Transmittal generated",
+          description: "Your transmittal has been generated successfully.",
+        });
+        onOpenChange(false);
+        setShowGenerateConfirm(false);
+        onSuccess?.();
+      }
     } catch (error) {
       toast({
         title: "Error",
