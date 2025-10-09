@@ -122,9 +122,15 @@ const mockTransmittals = [
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [createSheetOpen, setCreateSheetOpen] = useState(false);
-  const [documentLibraryOpen, setDocumentLibraryOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedTransmittal, setSelectedTransmittal] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
+  const [itemsToShow, setItemsToShow] = useState(9);
+  const { toast } = useToast();
 
   const filteredTransmittals = mockTransmittals.filter((t) => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
