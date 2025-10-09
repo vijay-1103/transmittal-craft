@@ -298,20 +298,59 @@ const Index = () => {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTransmittals.map((transmittal) => (
-                    <TransmittalCard
-                      key={transmittal.id}
-                      {...transmittal}
-                      onView={() => console.log("View", transmittal.id)}
-                      onEdit={
-                        transmittal.status === "draft"
-                          ? () => setCreateSheetOpen(true)
-                          : undefined
-                      }
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {displayedTransmittals.map((transmittal) => (
+                      <TransmittalCard
+                        key={transmittal.id}
+                        {...transmittal}
+                        onView={() => handleViewTransmittal(transmittal)}
+                        onEdit={
+                          transmittal.status === "draft"
+                            ? () => handleEditTransmittal(transmittal)
+                            : undefined
+                        }
+                        onDelete={
+                          transmittal.status === "draft"
+                            ? () => handleDeleteTransmittal(transmittal)
+                            : undefined
+                        }
+                        onGenerate={
+                          transmittal.status === "draft"
+                            ? () => handleGenerateTransmittal(transmittal)
+                            : undefined
+                        }
+                        onDownload={
+                          transmittal.status !== "draft"
+                            ? () => handleDownload(transmittal)
+                            : undefined
+                        }
+                        onShare={
+                          transmittal.status !== "draft"
+                            ? () => handleShare(transmittal)
+                            : undefined
+                        }
+                        onDuplicate={
+                          transmittal.status !== "draft"
+                            ? (mode) => handleDuplicate(transmittal, mode)
+                            : undefined
+                        }
+                        onSendToOther={
+                          transmittal.status !== "draft"
+                            ? () => handleSendToOther(transmittal)
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <div className="flex justify-center mt-8">
+                      <Button variant="outline" onClick={handleLoadMore}>
+                        Load More
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </Tabs>
