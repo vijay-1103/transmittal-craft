@@ -463,13 +463,29 @@ export function CreateTransmittalModal({
           </div>
         </ScrollArea>
 
-        <div className="flex gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-            {isViewMode ? "Close" : "Cancel"}
-          </Button>
-          {!isViewMode && (
-            <Button onClick={handleSave} className="flex-1">
-              {mode === "create" ? "Save as Draft" : "Save"}
+        <div className="flex justify-end gap-3 pt-4 border-t">
+          {isViewMode ? (
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          ) : isDraft ? (
+            <>
+              <Button variant="outline" onClick={handleSave}>
+                Save as Draft
+              </Button>
+              <Button onClick={() => {
+                toast({
+                  title: "Transmittal Generated",
+                  description: "Transmittal has been generated successfully.",
+                });
+                onOpenChange(false);
+              }}>
+                Generate
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleSave}>
+              Save
             </Button>
           )}
         </div>
