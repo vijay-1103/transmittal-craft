@@ -11,9 +11,8 @@ export default defineConfig(({ mode }) => ({
 
   // Server configuration
   server: {
-    port: 3000,
-    host: '0.0.0.0', // Explicitly bind to all interfaces
-    allowedHosts: true
+    port: 8080,
+    host: "::",
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
