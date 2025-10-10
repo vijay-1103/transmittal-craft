@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 192 60% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 192 60% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 192 60% 20%;
+
+    --primary: 192 60% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 192 20% 90%;
+    --secondary-foreground: 192 60% 20%;
+
+    --muted: 192 15% 95%;
+    --muted-foreground: 192 20% 45%;
+
+    --accent: 0 85% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 192 20% 88%;
+    --input: 192 20% 88%;
+    --ring: 192 60% 35%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 192 60% 35%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 192 60% 25%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 192 60% 40%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 192 60% 30%;
+    --sidebar-ring: 0 85% 50%;
+
+    /* Status colors */
+    --status-draft: 45 93% 47%;
+    --status-generated: 192 60% 50%;
+    --status-sent: 262 52% 47%;
+    --status-received: 142 71% 45%;
+  }
+
+  .dark {
+    --background: 192 60% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 192 50% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 192 50% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 192 60% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 192 40% 20%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 192 40% 18%;
+    --muted-foreground: 192 20% 65%;
+
+    --accent: 0 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 192 40% 20%;
+    --input: 192 40% 20%;
+    --ring: 192 60% 45%;
+
+    --sidebar-background: 192 60% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 192 60% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 192 50% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 192 50% 15%;
+    --sidebar-ring: 0 85% 55%;
+
+    --status-draft: 45 93% 57%;
+    --status-generated: 192 60% 60%;
+    --status-sent: 262 52% 60%;
+    --status-received: 142 71% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
