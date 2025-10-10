@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { TransmittalCard } from "@/components/TransmittalCard";
 import { CreateTransmittalModal } from "@/components/CreateTransmittalModal";
 import { ShareModal } from "@/components/ShareModal";
@@ -17,7 +17,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { transmittalApi, type Transmittal } from "@/services/transmittalApi";
 import logo from "@/assets/hosmac-logo.jpg";
 
 // Mock data - will be replaced with actual database
@@ -126,66 +125,41 @@ const Index = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedTransmittal, setSelectedTransmittal] = useState<Transmittal | null>(null);
+  const [selectedTransmittal, setSelectedTransmittal] = useState<any | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
   const [itemsToShow, setItemsToShow] = useState(9);
-  const [transmittals, setTransmittals] = useState<Transmittal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(false);
   const { toast } = useToast();
 
-  // Load transmittals from API
-  const loadTransmittals = async (reset = false) => {
-    try {
-      setLoading(true);
-      const skip = reset ? 0 : transmittals.length;
-      const limit = reset ? itemsToShow : 6;
+  // Using mock data - replace with API calls later
+  const [transmittals] = useState(mockTransmittals);
 
-      const data = await transmittalApi.getTransmittals({
-        status: activeTab,
-        skip,
-        limit,
-      });
-
-      if (reset) {
-        setTransmittals(data);
-      } else {
-        setTransmittals(prev => [...prev, ...data]);
-      }
-
-      setHasMore(data.length === limit);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load transmittals.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load transmittals on component mount and tab change
-  useEffect(() => {
-    setItemsToShow(9);
-    loadTransmittals(true);
-  }, [activeTab]);
-
-  // Filter transmittals based on search
+  // Filter transmittals based on search and active tab
   const filteredTransmittals = transmittals.filter((t) => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.transmittal_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      t.transmittalNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.recipient?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return matchesSearch;
+    const matchesTab = activeTab === "all" || t.status === activeTab;
+    
+    return matchesSearch && matchesTab;
   });
 
-  const displayedTransmittals = filteredTransmittals;
+  // Calculate status counts
+  const statusCounts = {
+    all: transmittals.length,
+    draft: transmittals.filter(t => t.status === "draft").length,
+    generated: transmittals.filter(t => t.status === "generated").length,
+    sent: transmittals.filter(t => t.status === "sent" && t.sentStatus === "Sent").length,
+    received: transmittals.filter(t => t.status === "received" && t.receivedStatus === "Received").length,
+  };
+
+  const displayedTransmittals = filteredTransmittals.slice(0, itemsToShow);
+  const hasMore = filteredTransmittals.length > itemsToShow;
 
   const handleLoadMore = () => {
-    loadTransmittals(false);
+    setItemsToShow(prev => prev + 6);
   };
 
   const handleCreateTransmittal = () => {
@@ -211,22 +185,12 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (selectedTransmittal) {
-      try {
-        await transmittalApi.deleteTransmittal(selectedTransmittal.id);
-        toast({
-          title: "Transmittal deleted",
-          description: `"${selectedTransmittal.title}" has been deleted.`,
-        });
-        loadTransmittals(true); // Reload data
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to delete transmittal.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Transmittal deleted",
+        description: `"${selectedTransmittal.title}" has been deleted.`,
+      });
     }
     setDeleteDialogOpen(false);
     setSelectedTransmittal(null);
@@ -237,22 +201,12 @@ const Index = () => {
     setGenerateDialogOpen(true);
   };
 
-  const confirmGenerate = async () => {
+  const confirmGenerate = () => {
     if (selectedTransmittal) {
-      try {
-        await transmittalApi.generateTransmittal(selectedTransmittal.id);
-        toast({
-          title: "Transmittal generated",
-          description: `"${selectedTransmittal.title}" has been generated successfully.`,
-        });
-        loadTransmittals(true); // Reload data
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to generate transmittal.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Transmittal generated",
+        description: `"${selectedTransmittal.title}" has been generated successfully.`,
+      });
     }
     setGenerateDialogOpen(false);
     setSelectedTransmittal(null);
@@ -330,11 +284,21 @@ const Index = () => {
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full grid grid-cols-5">
-              <TabsTrigger value="all" className="text-xs md:text-sm">All</TabsTrigger>
-              <TabsTrigger value="draft" className="text-xs md:text-sm">Draft</TabsTrigger>
-              <TabsTrigger value="generated" className="text-xs md:text-sm">Generated</TabsTrigger>
-              <TabsTrigger value="sent" className="text-xs md:text-sm">Sent</TabsTrigger>
-              <TabsTrigger value="received" className="text-xs md:text-sm">Received</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs md:text-sm">
+                All ({statusCounts.all})
+              </TabsTrigger>
+              <TabsTrigger value="draft" className="text-xs md:text-sm">
+                Draft ({statusCounts.draft})
+              </TabsTrigger>
+              <TabsTrigger value="generated" className="text-xs md:text-sm">
+                Generated ({statusCounts.generated})
+              </TabsTrigger>
+              <TabsTrigger value="sent" className="text-xs md:text-sm">
+                Sent ({statusCounts.sent})
+              </TabsTrigger>
+              <TabsTrigger value="received" className="text-xs md:text-sm">
+                Received ({statusCounts.received})
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-6">

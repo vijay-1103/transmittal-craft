@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,625 +9,471 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { transmittalApi, type DocumentItem, type TransmittalCreate } from "@/services/transmittalApi";
+import { format } from "date-fns";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface Document {
+  documentNo: string;
+  title: string;
+  revision: number;
+  copies: number;
+  action: string;
+}
 
 interface CreateTransmittalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editData?: any;
-  mode?: "create" | "edit" | "view";
-  onSuccess?: () => void;
+  mode: "create" | "edit" | "view";
 }
-
-const transmittalTypes = ["Drawing", "Documents"];
-const departments = ["Architecture", "Interior Design", "Engineering", "MEP", "Structural"];
-const designStages = ["Conceptual", "Schematic", "Design Development", "Construction Documents"];
-const sendToOptions = ["Client", "Contractor", "Consultant", "Authority"];
-const salutations = ["Mr", "Ms", "Dr", "Engr", "Arch"];
-const actionOptions = ["For Approval", "For Planning", "For Review", "For Information", "For Construction"];
 
 export function CreateTransmittalModal({
   open,
   onOpenChange,
   editData,
-  mode = "create",
-  onSuccess,
+  mode,
 }: CreateTransmittalModalProps) {
   const { toast } = useToast();
-  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    transmittal_type: editData?.transmittal_type || "",
-    department: editData?.department || "",
-    design_stage: editData?.design_stage || "",
-    transmittal_date: editData?.transmittal_date ? new Date(editData.transmittal_date) : new Date(),
-    send_to: editData?.send_to || "",
-    salutation: editData?.salutation || "",
-    recipient_name: editData?.recipient_name || "",
-    sender_name: editData?.sender_name || "",
-    sender_designation: editData?.sender_designation || "",
-    send_mode: editData?.send_mode || "Softcopy",
-    title: editData?.title || "",
-    project_name: editData?.project_name || "",
-    purpose: editData?.purpose || "",
-    remarks: editData?.remarks || "",
-  });
+  const isViewMode = mode === "view";
+  const isDraft = editData?.status === "draft";
+  const isSent = editData?.status === "sent";
+  const isReceived = editData?.status === "received";
 
-  const [documents, setDocuments] = useState<DocumentItem[]>(
-    editData?.documents || [
-      {
-        document_no: "",
-        title: "",
-        revision: 0,
-        copies: 1,
-        action: "For Approval",
-      },
-    ]
+  const [transmittalType, setTransmittalType] = useState(editData?.transmittalType || "");
+  const [department, setDepartment] = useState(editData?.department || "");
+  const [designStage, setDesignStage] = useState(editData?.designStage || "");
+  const [transmittalDate, setTransmittalDate] = useState<Date | undefined>(
+    editData?.transmittalDate ? new Date(editData.transmittalDate) : undefined
+  );
+  const [sendTo, setSendTo] = useState(editData?.sendTo || "");
+  const [salutation, setSalutation] = useState(editData?.salutation || "");
+  const [recipientName, setRecipientName] = useState(editData?.recipientName || "");
+  const [senderName, setSenderName] = useState(editData?.senderName || "");
+  const [senderDesignation, setSenderDesignation] = useState(editData?.senderDesignation || "");
+  const [sendMode, setSendMode] = useState(editData?.sendMode || "Softcopy");
+  const [documents, setDocuments] = useState<Document[]>(
+    editData?.documents || [{ documentNo: "", title: "", revision: 0, copies: 1, action: "" }]
   );
 
-  const isViewMode = mode === "view";
-  const isEditMode = mode === "edit";
+  // Additional fields for Sent status
+  const [whoIsDelivering, setWhoIsDelivering] = useState(editData?.whoIsDelivering || "");
 
-  const handleAddDocument = () => {
-    setDocuments([
-      ...documents,
-      {
-        document_no: "",
-        title: "",
-        revision: 0,
-        copies: 1,
-        action: "For Approval",
-      },
-    ]);
+  // Additional fields for Received status
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receivedDate, setReceivedDate] = useState<Date | undefined>(
+    editData?.receivedDate ? new Date(editData.receivedDate) : undefined
+  );
+  const [receivedTime, setReceivedTime] = useState(editData?.receivedTime || "");
+
+  const addDocument = () => {
+    setDocuments([...documents, { documentNo: "", title: "", revision: 0, copies: 1, action: "" }]);
   };
 
-  const handleRemoveDocument = (index: number) => {
-    if (documents.length > 1) {
-      setDocuments(documents.filter((_, i) => i !== index));
+  const removeDocument = (index: number) => {
+    setDocuments(documents.filter((_, i) => i !== index));
+  };
+
+  const updateDocument = (index: number, field: keyof Document, value: any) => {
+    const updated = [...documents];
+    updated[index] = { ...updated[index], [field]: value };
+    setDocuments(updated);
+  };
+
+  const handleSave = () => {
+    // Validation
+    if (!transmittalType || !department || !sendMode || documents.length === 0) {
+      toast({
+        title: "Incomplete form",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
     }
-  };
 
-  const handleDocumentChange = (index: number, field: string, value: any) => {
-    const updatedDocuments = documents.map((doc, i) => {
-      if (i === index) {
-        return { ...doc, [field]: value };
-      }
-      return doc;
+    toast({
+      title: mode === "create" ? "Draft saved" : "Updated",
+      description: mode === "create" ? "Transmittal saved as draft." : "Transmittal updated successfully.",
     });
-    setDocuments(updatedDocuments);
+    onOpenChange(false);
   };
 
-  const handleSaveDraft = async () => {
-    // Validate required fields
-    if (!formData.title || documents.some(doc => !doc.document_no || !doc.title)) {
-      toast({
-        title: "Incomplete information",
-        description: "Please provide title and complete all document information.",
-        variant: "destructive",
-      });
-      return;
+  const canEditAdditionalFields = () => {
+    if (isSent) {
+      return editData?.sentStatus !== "Sent";
     }
-
-    try {
-      const payload: TransmittalCreate = {
-        ...formData,
-        transmittal_date: format(formData.transmittal_date, "yyyy-MM-dd"),
-        documents,
-      };
-
-      if (mode === "edit" && editData?.id) {
-        await transmittalApi.updateTransmittal(editData.id, payload);
-        toast({
-          title: "Draft updated",
-          description: "Your transmittal has been updated successfully.",
-        });
-      } else {
-        await transmittalApi.createTransmittal(payload);
-        toast({
-          title: "Draft saved",
-          description: "Your transmittal has been saved as a draft.",
-        });
-      }
-      
-      onOpenChange(false);
-      onSuccess?.();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save transmittal.",
-        variant: "destructive",
-      });
+    if (isReceived) {
+      return editData?.receivedStatus !== "Received";
     }
-  };
-
-  const handleGenerate = async () => {
-    // Validate required fields
-    if (!formData.title || documents.some(doc => !doc.document_no || !doc.title)) {
-      toast({
-        title: "Incomplete information",
-        description: "Please provide title and complete all document information.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      let transmittalId = editData?.id;
-
-      // If creating new, save as draft first
-      if (mode === "create") {
-        const payload: TransmittalCreate = {
-          ...formData,
-          transmittal_date: format(formData.transmittal_date, "yyyy-MM-dd"),
-          documents,
-        };
-        const created = await transmittalApi.createTransmittal(payload);
-        transmittalId = created.id;
-      }
-
-      // Then generate it
-      if (transmittalId) {
-        await transmittalApi.generateTransmittal(transmittalId);
-        toast({
-          title: "Transmittal generated",
-          description: "Your transmittal has been generated successfully.",
-        });
-        onOpenChange(false);
-        setShowGenerateConfirm(false);
-        onSuccess?.();
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate transmittal.",
-        variant: "destructive",
-      });
-    }
+    return false;
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              {mode === "create" && "Create New Transmittal"}
-              {mode === "edit" && "Edit Transmittal"}
-              {mode === "view" && "View Transmittal"}
-            </DialogTitle>
-            <DialogDescription>
-              {mode === "create" && "Fill in the details below to create your transmittal"}
-              {mode === "edit" && "Update the transmittal details"}
-              {mode === "view" && "Transmittal details"}
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "create" ? "Create New Transmittal" : mode === "edit" ? "Edit Transmittal" : "View Transmittal"}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === "create" ? "Fill in the details below to create a new transmittal" : "Transmittal details"}
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
-            {/* Left Column */}
-            <div className="space-y-4">
+        <ScrollArea className="max-h-[calc(90vh-200px)] pr-4">
+          <div className="space-y-6 py-4">
+            {/* Basic Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="transmittal_type">Transmittal Type *</Label>
-                <Select
-                  value={formData.transmittal_type}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, transmittal_type: value })
-                  }
-                  disabled={isViewMode}
-                >
+                <Label htmlFor="transmittalType">Transmittal Type *</Label>
+                <Select value={transmittalType} onValueChange={setTransmittalType} disabled={isViewMode}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {transmittalTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Drawing">Drawing</SelectItem>
+                    <SelectItem value="Documents">Documents</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="department">Select Department *</Label>
-                <Select
-                  value={formData.department}
-                  onValueChange={(value) => setFormData({ ...formData, department: value })}
-                  disabled={isViewMode}
-                >
+                <Select value={department} onValueChange={setDepartment} disabled={isViewMode}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept} value={dept}>
-                        {dept}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Architecture">Architecture</SelectItem>
+                    <SelectItem value="Interior Design">Interior Design</SelectItem>
+                    <SelectItem value="MEP">MEP</SelectItem>
+                    <SelectItem value="Structural">Structural</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.transmittal_type === "Drawing" && (
+              {transmittalType === "Drawing" && (
                 <div className="space-y-2">
-                  <Label htmlFor="design_stage">Design Stage</Label>
-                  <Select
-                    value={formData.design_stage}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, design_stage: value })
-                    }
-                    disabled={isViewMode}
-                  >
+                  <Label htmlFor="designStage">Design Stage</Label>
+                  <Select value={designStage} onValueChange={setDesignStage} disabled={isViewMode}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select design stage" />
+                      <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
                     <SelectContent>
-                      {designStages.map((stage) => (
-                        <SelectItem key={stage} value={stage}>
-                          {stage}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Conceptual">Conceptual</SelectItem>
+                      <SelectItem value="Schematic">Schematic</SelectItem>
+                      <SelectItem value="Design Development">Design Development</SelectItem>
+                      <SelectItem value="Construction Documents">Construction Documents</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label>Transmittal Date *</Label>
+                <Label>Transmittal Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !formData.transmittal_date && "text-muted-foreground"
+                        !transmittalDate && "text-muted-foreground"
                       )}
                       disabled={isViewMode}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.transmittal_date ? (
-                        format(formData.transmittal_date, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
+                      {transmittalDate ? format(transmittalDate, "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={formData.transmittal_date}
-                      onSelect={(date) =>
-                        setFormData({ ...formData, transmittal_date: date || new Date() })
-                      }
+                      selected={transmittalDate}
+                      onSelect={setTransmittalDate}
                       initialFocus
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="send_to">Send To *</Label>
-                <Select
-                  value={formData.send_to}
-                  onValueChange={(value) => setFormData({ ...formData, send_to: value })}
-                  disabled={isViewMode}
-                >
+                <Label>Send To</Label>
+                <Select value={sendTo} onValueChange={setSendTo} disabled={isViewMode}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select recipient type" />
+                    <SelectValue placeholder="Select recipient" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sendToOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Client">Client</SelectItem>
+                    <SelectItem value="Contractor">Contractor</SelectItem>
+                    <SelectItem value="Consultant">Consultant</SelectItem>
+                    <SelectItem value="Vendor">Vendor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="salutation">Salutation</Label>
-                <Select
-                  value={formData.salutation}
-                  onValueChange={(value) => setFormData({ ...formData, salutation: value })}
-                  disabled={isViewMode}
-                >
+                <Label>Salutation</Label>
+                <Select value={salutation} onValueChange={setSalutation} disabled={isViewMode}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select salutation" />
                   </SelectTrigger>
                   <SelectContent>
-                    {salutations.map((sal) => (
-                      <SelectItem key={sal} value={sal}>
-                        {sal}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Mr">Mr</SelectItem>
+                    <SelectItem value="Ms">Ms</SelectItem>
+                    <SelectItem value="Mrs">Mrs</SelectItem>
+                    <SelectItem value="Dr">Dr</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="title">Transmittal Title *</Label>
+                <Label>Recipient Name</Label>
                 <Input
-                  id="title"
-                  placeholder="e.g., Architectural Drawings - Rev A"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="Enter recipient name"
+                  disabled={isViewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Sender Name</Label>
+                <Input
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                  placeholder="Enter sender name"
+                  disabled={isViewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Sender Designation</Label>
+                <Input
+                  value={senderDesignation}
+                  onChange={(e) => setSenderDesignation(e.target.value)}
+                  placeholder="Enter designation"
                   disabled={isViewMode}
                 />
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="recipient_name">Recipient Name *</Label>
-                <Input
-                  id="recipient_name"
-                  placeholder="e.g., John Smith"
-                  value={formData.recipient_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, recipient_name: e.target.value })
-                  }
-                  disabled={isViewMode}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sender_name">Sender Name</Label>
-                <Input
-                  id="sender_name"
-                  placeholder="Your name"
-                  value={formData.sender_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sender_name: e.target.value })
-                  }
-                  disabled={isViewMode}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sender_designation">Sender Designation</Label>
-                <Input
-                  id="sender_designation"
-                  placeholder="e.g., Project Manager"
-                  value={formData.sender_designation}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sender_designation: e.target.value })
-                  }
-                  disabled={isViewMode}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label>Send Mode *</Label>
-                <RadioGroup
-                  value={formData.send_mode}
-                  onValueChange={(value) => setFormData({ ...formData, send_mode: value })}
-                  className="flex flex-row space-x-6"
-                  disabled={isViewMode}
-                >
+            {/* Send Mode */}
+            <div className="space-y-2">
+              <Label>Send Mode *</Label>
+              <RadioGroup value={sendMode} onValueChange={setSendMode} disabled={isViewMode}>
+                <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Hardcopy" id="hardcopy" disabled={isViewMode} />
-                    <Label htmlFor="hardcopy">Hardcopy</Label>
+                    <RadioGroupItem value="Hardcopy" id="hardcopy" />
+                    <Label htmlFor="hardcopy" className="font-normal cursor-pointer">Hardcopy</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Softcopy" id="softcopy" disabled={isViewMode} />
-                    <Label htmlFor="softcopy">Softcopy</Label>
+                    <RadioGroupItem value="Softcopy" id="softcopy" />
+                    <Label htmlFor="softcopy" className="font-normal cursor-pointer">Softcopy</Label>
                   </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="project_name">Project Name</Label>
-                <Input
-                  id="project_name"
-                  placeholder="e.g., Hospital Wing Extension"
-                  value={formData.project_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, project_name: e.target.value })
-                  }
-                  disabled={isViewMode}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="purpose">Purpose</Label>
-                <Textarea
-                  id="purpose"
-                  placeholder="Reason for this transmittal"
-                  value={formData.purpose}
-                  onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                  rows={3}
-                  disabled={isViewMode}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="remarks">Remarks</Label>
-                <Textarea
-                  id="remarks"
-                  placeholder="Additional notes or instructions"
-                  value={formData.remarks}
-                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                  rows={3}
-                  disabled={isViewMode}
-                />
-              </div>
+                </div>
+              </RadioGroup>
             </div>
-          </div>
 
-          {/* Documents Table */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">
-                {formData.transmittal_type === "Drawing" ? "Drawing" : "Document"} Information *
-              </Label>
-              {!isViewMode && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddDocument}
+            {/* Additional fields for Sent status */}
+            {isSent && sendMode === "Hardcopy" && (
+              <div className="space-y-2">
+                <Label>Who is Delivering</Label>
+                <Select
+                  value={whoIsDelivering}
+                  onValueChange={setWhoIsDelivering}
+                  disabled={isViewMode || !canEditAdditionalFields()}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Row
-                </Button>
-              )}
-            </div>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select deliverer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Receptionist">Receptionist</SelectItem>
+                    <SelectItem value="Me">Me</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            <div className="border rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-sm font-medium">
-                        {formData.transmittal_type === "Drawing" ? "Drawing" : "Document"} No.
-                      </th>
-                      <th className="px-3 py-2 text-left text-sm font-medium">Title</th>
-                      <th className="px-3 py-2 text-left text-sm font-medium">Revision</th>
-                      <th className="px-3 py-2 text-left text-sm font-medium">Copies</th>
-                      <th className="px-3 py-2 text-left text-sm font-medium">Action</th>
-                      {!isViewMode && <th className="px-3 py-2 text-center text-sm font-medium">Actions</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documents.map((document, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="px-3 py-2">
-                          <Input
-                            placeholder="Doc-001"
-                            value={document.document_no}
-                            onChange={(e) =>
-                              handleDocumentChange(index, "document_no", e.target.value)
-                            }
-                            className="w-full"
-                            disabled={isViewMode}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            placeholder="Document title"
-                            value={document.title}
-                            onChange={(e) =>
-                              handleDocumentChange(index, "title", e.target.value)
-                            }
-                            className="w-full"
-                            disabled={isViewMode}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={document.revision}
-                            onChange={(e) =>
-                              handleDocumentChange(index, "revision", parseInt(e.target.value) || 0)
-                            }
-                            className="w-full"
-                            min="0"
-                            disabled={isViewMode}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            type="number"
-                            placeholder="1"
-                            value={document.copies}
-                            onChange={(e) =>
-                              handleDocumentChange(index, "copies", parseInt(e.target.value) || 1)
-                            }
-                            className="w-full"
-                            min="1"
-                            disabled={isViewMode}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Select
-                            value={document.action}
-                            onValueChange={(value) =>
-                              handleDocumentChange(index, "action", value)
-                            }
-                            disabled={isViewMode}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {actionOptions.map((action) => (
-                                <SelectItem key={action} value={action}>
-                                  {action}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        {!isViewMode && (
-                          <td className="px-3 py-2 text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveDocument(index)}
-                              disabled={documents.length <= 1}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </td>
+            {/* Additional fields for Received status */}
+            {isReceived && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Upload Receipt</Label>
+                  <Input
+                    type="file"
+                    onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                    disabled={isViewMode || !canEditAdditionalFields()}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Received Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !receivedDate && "text-muted-foreground"
                         )}
+                        disabled={isViewMode || !canEditAdditionalFields()}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {receivedDate ? format(receivedDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={receivedDate}
+                        onSelect={setReceivedDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label>Received Time</Label>
+                  <Input
+                    type="time"
+                    value={receivedTime}
+                    onChange={(e) => setReceivedTime(e.target.value)}
+                    disabled={isViewMode || !canEditAdditionalFields()}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Document Table */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Drawing/Document Information *</Label>
+                {!isViewMode && (
+                  <Button type="button" variant="outline" size="sm" onClick={addDocument}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Row
+                  </Button>
+                )}
+              </div>
+              
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="p-2 text-left text-xs font-medium">Doc/Drawing No</th>
+                        <th className="p-2 text-left text-xs font-medium">Title</th>
+                        <th className="p-2 text-left text-xs font-medium w-20">Revision</th>
+                        <th className="p-2 text-left text-xs font-medium w-20">Copies</th>
+                        <th className="p-2 text-left text-xs font-medium">Action</th>
+                        {!isViewMode && <th className="p-2 w-12"></th>}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {documents.map((doc, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="p-2">
+                            <Input
+                              value={doc.documentNo}
+                              onChange={(e) => updateDocument(index, "documentNo", e.target.value)}
+                              placeholder="Doc no"
+                              className="h-8 text-xs"
+                              disabled={isViewMode}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={doc.title}
+                              onChange={(e) => updateDocument(index, "title", e.target.value)}
+                              placeholder="Title"
+                              className="h-8 text-xs"
+                              disabled={isViewMode}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="number"
+                              value={doc.revision}
+                              onChange={(e) => updateDocument(index, "revision", parseInt(e.target.value) || 0)}
+                              className="h-8 text-xs"
+                              disabled={isViewMode}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="number"
+                              value={doc.copies}
+                              onChange={(e) => updateDocument(index, "copies", parseInt(e.target.value) || 1)}
+                              className="h-8 text-xs"
+                              disabled={isViewMode}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Select
+                              value={doc.action}
+                              onValueChange={(value) => updateDocument(index, "action", value)}
+                              disabled={isViewMode}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="For Approval">For Approval</SelectItem>
+                                <SelectItem value="For Planning">For Planning</SelectItem>
+                                <SelectItem value="For Review">For Review</SelectItem>
+                                <SelectItem value="For Information">For Information</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          {!isViewMode && (
+                            <td className="p-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeDocument(index)}
+                                disabled={documents.length === 1}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
+        </ScrollArea>
 
+        <div className="flex gap-3 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            {isViewMode ? "Close" : "Cancel"}
+          </Button>
           {!isViewMode && (
-            <div className="flex gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={handleSaveDraft} className="flex-1">
-                Save as Draft
-              </Button>
-              <Button onClick={() => setShowGenerateConfirm(true)} className="flex-1">
-                Generate Transmittal
-              </Button>
-            </div>
+            <Button onClick={handleSave} className="flex-1">
+              {mode === "create" ? "Save as Draft" : "Save"}
+            </Button>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Generate Confirmation Dialog */}
-      <AlertDialog open={showGenerateConfirm} onOpenChange={setShowGenerateConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Once generated, this transmittal cannot be edited or deleted. Do you want to proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleGenerate}>Yes, Generate</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

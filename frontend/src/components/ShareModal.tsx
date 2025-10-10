@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Mail, MessageSquare } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ShareModalProps {
   open: boolean;
@@ -15,46 +15,72 @@ interface ShareModalProps {
   transmittalTitle: string;
 }
 
-export function ShareModal({ open, onOpenChange, transmittalTitle }: ShareModalProps) {
-  const handleShareTeams = () => {
-    // Mock Teams share functionality
-    console.log("Sharing via Teams:", transmittalTitle);
+export function ShareModal({
+  open,
+  onOpenChange,
+  transmittalTitle,
+}: ShareModalProps) {
+  const { toast } = useToast();
+
+  const handleShareViaTeams = () => {
+    toast({
+      title: "Sharing via Teams",
+      description: `"${transmittalTitle}" will be shared via Microsoft Teams.`,
+    });
     onOpenChange(false);
   };
 
-  const handleShareEmail = () => {
-    // Mock Email share functionality
-    console.log("Sharing via Email:", transmittalTitle);
+  const handleShareViaMail = () => {
+    toast({
+      title: "Sharing via Mail",
+      description: `"${transmittalTitle}" will be shared via email.`,
+    });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Share Transmittal</DialogTitle>
           <DialogDescription>
-            How would you like to share "{transmittalTitle}"?
+            Choose how you want to share "{transmittalTitle}"
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-4">
           <Button
             variant="outline"
-            className="w-full justify-start"
-            onClick={handleShareTeams}
+            className="w-full justify-start h-auto py-4"
+            onClick={handleShareViaTeams}
           >
             <MessageSquare className="mr-3 h-5 w-5" />
-            Share via Teams
+            <div className="text-left">
+              <div className="font-medium">Share via Microsoft Teams</div>
+              <div className="text-xs text-muted-foreground">
+                Send this transmittal through Teams
+              </div>
+            </div>
           </Button>
-          
+
           <Button
             variant="outline"
-            className="w-full justify-start"
-            onClick={handleShareEmail}
+            className="w-full justify-start h-auto py-4"
+            onClick={handleShareViaMail}
           >
             <Mail className="mr-3 h-5 w-5" />
-            Share via Email
+            <div className="text-left">
+              <div className="font-medium">Share via Email</div>
+              <div className="text-xs text-muted-foreground">
+                Send this transmittal through email
+              </div>
+            </div>
+          </Button>
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
           </Button>
         </div>
       </DialogContent>
