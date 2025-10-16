@@ -15,21 +15,7 @@ const Login = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // TODO: Replace with actual authentication
-    if (email && password) {
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      navigate("/projects");
-    } else {
-      toast({
-        title: "Login Failed",
-        description: "Please enter valid credentials",
-        variant: "destructive",
-      });
-    }
+    navigate("/projects");
   };
 
   return (
@@ -56,7 +42,6 @@ const Login = () => {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
               />
             </div>
             <div className="space-y-2">
@@ -67,7 +52,6 @@ const Login = () => {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
               />
             </div>
             <Button type="submit" className="w-full">
