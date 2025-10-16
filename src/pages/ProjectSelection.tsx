@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, LayoutDashboard, LogOut } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Palette, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import hosmacLogo from "@/assets/hosmac-logo.jpg";
 
@@ -35,6 +35,20 @@ const ProjectSelection = () => {
       description: "Overview of all projects",
       icon: LayoutDashboard,
       onClick: () => toast({ title: "Coming Soon", description: "Dashboard will be available soon" }),
+    },
+    {
+      id: 2,
+      name: "Color Selector",
+      description: "Manage project color schemes",
+      icon: Palette,
+      onClick: () => toast({ title: "Coming Soon", description: "Color Selector will be available soon" }),
+    },
+    {
+      id: 3,
+      name: "Vendor Directory",
+      description: "Directory of all vendors",
+      icon: Users,
+      onClick: () => toast({ title: "Coming Soon", description: "Vendor Directory will be available soon" }),
     },
   ];
 
