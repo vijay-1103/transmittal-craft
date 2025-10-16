@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, LayoutDashboard, ArrowLeft, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import hosmacLogo from "@/assets/hosmac-logo.jpg";
 
 const ProjectApps = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const ProjectApps = () => {
             </Button>
             <div className="flex items-center gap-3">
               <img 
-                src="/src/assets/hosmac-logo.jpg" 
+                src={hosmacLogo} 
                 alt="Hosmac Logo" 
                 className="h-10 w-10 rounded-full object-cover"
               />

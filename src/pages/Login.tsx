@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import hosmacLogo from "@/assets/hosmac-logo.jpg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const Login = () => {
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center mb-2">
             <img 
-              src="/src/assets/hosmac-logo.jpg" 
+              src={hosmacLogo} 
               alt="Hosmac Logo" 
               className="h-16 w-16 rounded-full object-cover"
             />

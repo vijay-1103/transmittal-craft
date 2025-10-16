@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, FileText, LayoutDashboard, LogOut } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import hosmacLogo from "@/assets/hosmac-logo.jpg";
 
 const ProjectSelection = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const ProjectSelection = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
-              src="/src/assets/hosmac-logo.jpg" 
+              src={hosmacLogo} 
               alt="Hosmac Logo" 
               className="h-10 w-10 rounded-full object-cover"
             />
